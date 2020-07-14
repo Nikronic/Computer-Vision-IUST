@@ -133,3 +133,7 @@ dmypy.json
 HW04/.idea/
 
 *.gz
+
+Project/.idea/
+
+Project/prj.pdf
