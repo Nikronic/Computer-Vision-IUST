@@ -114,6 +114,33 @@ vis = cv2.add(frame, mask)
 plt.imshow(vis, cmap='gray')
 plt.show()
 
+# get homography
+MIN_NUM_POINTS = 4
+num_points = len(image1_good_points)
+image1_good_points_indices = np.arange(num_points)
+image2_good_points_indices = np.arange(num_points)
+
+# build A matrix
+a_matrix = np.zeros((num_points * 2, 9))
+idx = 0
+for i, j in zip(image1_good_points_indices, image2_good_points_indices):
+    a_matrix[idx, :] = np.array([-image1_good_points[i, 0, 0], -image1_good_points[i, 0, 1], -1,
+                                 0, 0, 0,
+                                 image2_good_points[j, 0, 0] * image1_good_points[i, 0, 0],
+                                image2_good_points[j, 0, 0] * image1_good_points[i, 0, 1],
+                                image2_good_points[j, 0, 0]])
+    idx += 1
+    a_matrix[i + 1, :] = np.array([0, 0, 0,
+                                   -image1_good_points[i, 0, 0], -image1_good_points[i, 0, 1], -1,
+                                   image2_good_points[j, 0, 1] * image1_good_points[i, 0, 0],
+                                   image2_good_points[j, 0, 1] * image1_good_points[i, 0, 1],
+                                   image2_good_points[j, 0, 1]])
+    idx += 1
+
+u, s, v = np.linalg.svd(a_matrix)
+h_unnormalized = v[8].reshape(3, 3)
+h = (1 / h_unnormalized.flatten()[8]) * h_unnormalized
+
 # %% test
 H, status = cv2.findHomography(image1_good_points, image2_good_points, cv2.RANSAC, 10.0)
 h, w = image2.shape[:2]
