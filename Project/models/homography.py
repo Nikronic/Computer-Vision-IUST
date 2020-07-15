@@ -1,6 +1,7 @@
 # %% import libraries
 
 import numpy as np
+import random
 import cv2
 import PIL
 import matplotlib.pyplot as plt
@@ -114,32 +115,38 @@ vis = cv2.add(frame, mask)
 plt.imshow(vis, cmap='gray')
 plt.show()
 
+
 # get homography
-MIN_NUM_POINTS = 4
-num_points = len(image1_good_points)
-image1_good_points_indices = np.arange(num_points)
-image2_good_points_indices = np.arange(num_points)
+def homography(points1, points2, num_points=4):
+    MIN_NUM_POINTS = 4
+    assert num_points >= MIN_NUM_POINTS
+    points1_indices = random.sample(list(range(len(points1))), num_points)
+    points2_indices = random.sample(list(range(len(points2))), num_points)
 
-# build A matrix
-a_matrix = np.zeros((num_points * 2, 9))
-idx = 0
-for i, j in zip(image1_good_points_indices, image2_good_points_indices):
-    a_matrix[idx, :] = np.array([-image1_good_points[i, 0, 0], -image1_good_points[i, 0, 1], -1,
-                                 0, 0, 0,
-                                 image2_good_points[j, 0, 0] * image1_good_points[i, 0, 0],
-                                image2_good_points[j, 0, 0] * image1_good_points[i, 0, 1],
-                                image2_good_points[j, 0, 0]])
-    idx += 1
-    a_matrix[i + 1, :] = np.array([0, 0, 0,
-                                   -image1_good_points[i, 0, 0], -image1_good_points[i, 0, 1], -1,
-                                   image2_good_points[j, 0, 1] * image1_good_points[i, 0, 0],
-                                   image2_good_points[j, 0, 1] * image1_good_points[i, 0, 1],
-                                   image2_good_points[j, 0, 1]])
-    idx += 1
+    # build A matrix
+    a_matrix = np.zeros((num_points * 2, 9))
+    idx = 0
+    for i, j in zip(points1_indices, points2_indices):
+        a_matrix[idx, :] = np.array([-points1[i, 0, 0], -points2[i, 0, 1], -1,
+                                     0, 0, 0,
+                                     points2[j, 0, 0] * points1[i, 0, 0],
+                                     points2[j, 0, 0] * points1[i, 0, 1],
+                                     points2[j, 0, 0]])
+        idx += 1
+        a_matrix[idx, :] = np.array([0, 0, 0,
+                                     -points1[i, 0, 0], -points1[i, 0, 1], -1,
+                                     points2[j, 0, 1] * points1[i, 0, 0],
+                                     points2[j, 0, 1] * points1[i, 0, 1],
+                                     points2[j, 0, 1]])
+        idx += 1
 
-u, s, v = np.linalg.svd(a_matrix)
-h_unnormalized = v[8].reshape(3, 3)
-h = (1 / h_unnormalized.flatten()[8]) * h_unnormalized
+    u, s, v = np.linalg.svd(a_matrix)
+    h_unnormalized = v[8].reshape(3, 3)
+    h = (1 / h_unnormalized.flatten()[8]) * h_unnormalized
+    return h
+
+
+h_matrix = homography(image1_good_points, image2_good_points)
 
 # %% test
 H, status = cv2.findHomography(image1_good_points, image2_good_points, cv2.RANSAC, 10.0)
