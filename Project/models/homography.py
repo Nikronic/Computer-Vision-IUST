@@ -19,7 +19,7 @@ def get_points(img, threshold=0.1, coordinate=False):
     :return: A matrix same size as input as a binary mask of points
     """
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.float32)
-    img_harris = cv2.cornerHarris(img_gray, 5, 3, 0.04)
+    img_harris = cv2.cornerHarris(img_gray, 7, 3, 0.03)
     img_points = img_harris > threshold * img_harris.max()
     if coordinate:
         img_points = (img_points * 1).nonzero()
@@ -103,14 +103,22 @@ image1_good_points, image2_good_points = lucas_kanade_tracker(image1, image2, im
 # visualization
 color = np.random.randint(0, 255, (len(image2_good_points), 3))
 mask = np.zeros_like(image1)
+frame = image2.copy()
 for i, (i2, i1) in enumerate(zip(image2_good_points, image1_good_points)):
     a, b = i2.ravel()
     c, d = i1.ravel()
     mask = cv2.line(mask, (a, b), (c, d), color[i].tolist(), 2)
-    frame = cv2.circle(image2.copy(), (a, b), 5, color[i].tolist(), -1)
+    frame = cv2.circle(frame, (a, b), 5, color[i].tolist(), -1)
 
-img = cv2.add(frame, mask)
-plt.imshow(img, cmap='gray')
+vis = cv2.add(frame, mask)
+plt.imshow(vis, cmap='gray')
 plt.show()
 
 # %% test
+H, status = cv2.findHomography(image1_good_points, image2_good_points, cv2.RANSAC, 10.0)
+h, w = image2.shape[:2]
+overlay = cv2.warpPerspective(image1, H, (w, h))
+vis = cv2.addWeighted(vis, 0.5, overlay, 0.5, 0.0)
+
+plt.imshow(vis)
+plt.show()
