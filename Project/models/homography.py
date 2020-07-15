@@ -9,25 +9,39 @@ from copy import deepcopy
 
 
 # %% 1 Extract Harris interest points
+def get_points(img, threshold=0.1, coordinate=False):
+    """
+    Extract harris points of given image
 
-image1 = cv2.imread('../data/images/building1.jpg')
-image2 = cv2.imread('../data/images/building2.jpg')
+    :param img: An image of type open cv
+    :param threshold: Threshold of max value in found points
+    :param coordinate: Return a tuple of (x, y) coordinates instead of mask
+    :return: A matrix same size as input as a binary mask of points
+    """
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.float32)
+    img_harris = cv2.cornerHarris(img_gray, 5, 3, 0.04)
+    img_points = img_harris > threshold * img_harris.max()
+    if coordinate:
+        img_points = (img_points * 1).nonzero()
+        return img_points
+    return img_points
 
-# 1.1 convert to grayscale
-image1_gray = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY).astype(np.float32)
-image2_gray = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY).astype(np.float32)
 
-# 1.2 detect corners
-image1_harris = cv2.cornerHarris(image1_gray, 5, 3, 0.02)
-image2_harris = cv2.cornerHarris(image2_gray, 5, 3, 0.02)
+image1 = cv2.imread('data/images/building1.jpg')
+image2 = cv2.imread('data/images/building2.jpg')
 
-# 1.3 dilate to emphasize features
-image1_harris = cv2.dilate(image1_harris, None)
-image2_harris = cv2.dilate(image2_harris, None)
+image1_points = get_points(image1, coordinate=True)
+image2_points = get_points(image2, coordinate=True)
 
 # 1.4 visualization
-image1[image1_harris > 0.05 * image1_harris.max()] = [0, 0, 255]
-plt.imshow(image1, cmap='gray')
+vis = deepcopy(image1)
+vis[image1_points] = [255, 0, 0]
+plt.imshow(vis, cmap='gray')
+plt.show()
+
+vis = deepcopy(image2)
+vis[image2_points] = [255, 0, 0]
+plt.imshow(vis, cmap='gray')
 plt.show()
 
 image2[image2_harris > 0.05 * image2_harris.max()] = [255, 0, 0]
