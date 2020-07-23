@@ -117,11 +117,19 @@ plt.show()
 
 
 # get homography
-def homography(points1, points2, num_points=4):
-    MIN_NUM_POINTS = 4
-    assert num_points >= MIN_NUM_POINTS
-    points1_indices = random.sample(list(range(len(points1))), num_points)
-    points2_indices = random.sample(list(range(len(points2))), num_points)
+def homography(points1, points1_indices, points2, points2_indices, num_points=4, min_num_points=4):
+    """
+    Computes homography matrix for given two sets of points
+
+    :param points1: First point set
+    :param points1_indices: First point set indices
+    :param points2: Second point set
+    :param points2_indices: Second Point set indices
+    :param num_points: Number of points to use for calculating homography
+    :param min_num_points: Minimum number of points required (Degree of freedom)
+    :return: A 3x3 normalized homography matrix
+    """
+    assert num_points >= min_num_points
 
     # build A matrix
     a_matrix = np.zeros((num_points * 2, 9))
