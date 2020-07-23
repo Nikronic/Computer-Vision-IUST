@@ -154,12 +154,73 @@ def homography(points1, points1_indices, points2, points2_indices, num_points=4,
     return h
 
 
-h_matrix = homography(image1_good_points, image2_good_points)
+MIN_NUM_POINTS = 4
+points1_indices = random.sample(list(range(len(image1_good_points))), MIN_NUM_POINTS)
+points2_indices = random.sample(list(range(len(image2_good_points))), MIN_NUM_POINTS)
+h_matrix = homography(image1_good_points, points1_indices, image2_good_points, points2_indices)
+
+
+# %% RANSAC
+# error
+def error(match, homography):
+    """
+    Computes the error (L2 norm) between predicted position of point set 2 using given homography matrix
+
+    :param match: A dictionary containing 'p1' as point 1 and 'p2' as point 2
+    :param homography: A 3x3 homography matrix
+    :return: A float number as euclidean distance between predicted point and it's original value
+    """
+    p1 = match['p1']
+    p2 = match['p2']
+    # to cart
+    point1 = np.array([p1[0], p1[1], 1])
+    point2_pred = np.dot(homography, point1.T)
+    # to homo
+    point2_pred = point2_pred / point2_pred[-1]
+    point2 = np.array([p2[0], p2[1], 1])
+    return np.sqrt(np.sum((point2 - point2_pred) ** 2))
+
+
+# RANSAC
+def ransac(points1, points2, threshold=10.0, n_iterations=10000, early_stop=None, min_num_points=4):
+    max_inlier = 0
+    best_h = np.zeros((3, 3))
+
+    if early_stop is not None:
+        raise NotImplementedError()
+
+    for i in range(n_iterations):
+        points1_indices = random.sample(list(range(len(points1))), min_num_points)
+        points2_indices = random.sample(list(range(len(points2))), min_num_points)
+        h_matrix = homography(points1, points1_indices, points2, points2_indices)
+
+        inlier = 0
+        for j in range(len(image1_good_points)):
+            match = {'p1': image1_good_points[j, 0],
+                     'p2': image2_good_points[j, 0]}
+            e = error(match, h_matrix)
+            if e <= threshold:
+                inlier += 1
+
+        if inlier > max_inlier:
+            max_inlier = inlier
+            best_h = h_matrix
+    return best_h, max_inlier
+
+
+# test single point transformation
+best_homography, max_inliers = ransac(image1_good_points, image2_good_points, n_iterations=50000)
+print('Max inliers: ', max_inliers)
+z1 = image1_good_points[0]
+z1 = np.array([z1[0, 0], z1[0, 1], 1])
+z2 = best_homography.dot(z1.T)
+z2 = z2/z2[-1]
+print(z2[:-1], image2_good_points[0])
 
 # %% test
 H, status = cv2.findHomography(image1_good_points, image2_good_points, cv2.RANSAC, 10.0)
 h, w = image2.shape[:2]
-overlay = cv2.warpPerspective(image1, H, (w, h))
+overlay = cv2.warpPerspective(image1, best_homography, (w, h))
 vis = cv2.addWeighted(vis, 0.5, overlay, 0.5, 0.0)
 
 plt.imshow(vis)
