@@ -161,8 +161,8 @@ def homography(points1, points1_indices, points2, points2_indices, num_points=4,
 
 MIN_NUM_POINTS = 4
 points1_indices = random.sample(list(range(len(image1_good_points))), MIN_NUM_POINTS)
-points2_indices = random.sample(list(range(len(image2_good_points))), MIN_NUM_POINTS)
-h_matrix = homography(image1_good_points, points1_indices, image2_good_points, points2_indices)
+# points2_indices = random.sample(list(range(len(image2_good_points))), MIN_NUM_POINTS)
+h_matrix = homography(image1_good_points, points1_indices, image2_good_points, points1_indices)
 
 
 # %% RANSAC
@@ -196,8 +196,8 @@ def ransac(points1, points2, threshold=10.0, n_iterations=10000, early_stop=None
 
     for i in range(n_iterations):
         points1_indices = random.sample(list(range(len(points1))), min_num_points)
-        points2_indices = random.sample(list(range(len(points2))), min_num_points)
-        h_matrix = homography(points1, points1_indices, points2, points2_indices)
+        # points2_indices = random.sample(list(range(len(points2))), min_num_points)
+        h_matrix = homography(points1, points1_indices, points2, points1_indices)
 
         inlier = 0
         for j in range(len(image1_good_points)):
@@ -214,7 +214,7 @@ def ransac(points1, points2, threshold=10.0, n_iterations=10000, early_stop=None
 
 
 # test single point transformation
-best_homography, max_inliers = ransac(image1_good_points, image2_good_points, n_iterations=10000, threshold=3.)
+best_homography, max_inliers = ransac(image1_good_points, image2_good_points, n_iterations=50000, threshold=10.)
 print('Max inliers: ', max_inliers)
 z1 = image1_good_points[0]
 z1 = np.array([z1[0, 0], z1[0, 1], 1])
