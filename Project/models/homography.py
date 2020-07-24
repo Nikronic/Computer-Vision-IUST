@@ -151,6 +151,11 @@ def homography(points1, points1_indices, points2, points2_indices, num_points=4,
     u, s, v = np.linalg.svd(a_matrix)
     h_unnormalized = v[8].reshape(3, 3)
     h = (1 / h_unnormalized.flatten()[8]) * h_unnormalized
+
+    # eig = np.linalg.eig(a_matrix.T.dot(a_matrix))
+    # # smallest_idx = eig[0].argmin()
+    # h_ = eig[1][-1].reshape(3, 3)
+    # h = (1 / h_.flatten()[8]) * h_
     return h
 
 
@@ -209,7 +214,7 @@ def ransac(points1, points2, threshold=10.0, n_iterations=10000, early_stop=None
 
 
 # test single point transformation
-best_homography, max_inliers = ransac(image1_good_points, image2_good_points, n_iterations=50000)
+best_homography, max_inliers = ransac(image1_good_points, image2_good_points, n_iterations=10000, threshold=3.)
 print('Max inliers: ', max_inliers)
 z1 = image1_good_points[0]
 z1 = np.array([z1[0, 0], z1[0, 1], 1])
