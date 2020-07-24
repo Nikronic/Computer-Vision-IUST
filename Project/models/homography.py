@@ -135,7 +135,7 @@ def homography(points1, points1_indices, points2, points2_indices, num_points=4,
     a_matrix = np.zeros((num_points * 2, 9))
     idx = 0
     for i, j in zip(points1_indices, points2_indices):
-        a_matrix[idx, :] = np.array([-points1[i, 0, 0], -points2[i, 0, 1], -1,
+        a_matrix[idx, :] = np.array([-points1[i, 0, 0], -points1[i, 0, 1], -1,
                                      0, 0, 0,
                                      points2[j, 0, 0] * points1[i, 0, 0],
                                      points2[j, 0, 0] * points1[i, 0, 1],
